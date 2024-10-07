@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+.game-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#rope-container {
+    height: 50px;
+    background-color: lightgray;
+    margin: 20px 0;
+    position: relative;
+}
+
+#rope {
+    width: 10px;
+    height: 100%;
+    background-color: brown;
+    position: absolute;
+    left: 50%;
+}
+
+#answers button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 18px;
+}
+
+.hidden {
+    display: none;
+}
+
+#win-message {
+    margin-top: 20px;
+}
+
+#turn-indicator {
+    margin-top: 15px;
+    font-weight: bold;
+}

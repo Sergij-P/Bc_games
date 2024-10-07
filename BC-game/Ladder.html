@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гра Драбинка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            text-align: left;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #game-board {
+            margin-top: 20px;
+            display: inline-block;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(12, 40px);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .special-cell {
+            background-color: lightgreen;
+            color: black;
+        }
+        .ladder {
+            background-color: lightblue;
+        }
+        .snake {
+            background-color: lightcoral;
+        }
+        .player {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            transition: all 0.5s ease;
+            border-radius: 50%;
+        }
+        .player1 { background-color: red; }
+        .player2 { background-color: blue; }
+        .player3 { background-color: green; }
+        .player4 { background-color: yellow; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        #dice-result {
+            font-size: 24px;
+        }
+        #roll-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            color: white;
+        }
+        #rules {
+            margin-left: 50px;
+            max-width: 300px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p, ul {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-board">
+            <h1>Гра Драбинка</h1>
+            <p>Виберіть кількість гравців:</p>
+            <select id="num-players">
+                <option value="2">2 Гравці</option>
+                <option value="3">3 Гравці</option>
+                <option value="4">4 Гравці</option>
+            </select>
+            <button onclick="startGame()">Почати Гру</button>
+
+            <div id="board"></div>
+            <div id="dice-result"></div>
+        </div>
+
+        <div id="rules">
+            <h2>Правила гри:</h2>
+            <p>Мета гри — дістатися до фінішу, який знаходиться на клітинці 120. Кожен гравець по черзі кидає кубик, і його фішка переміщується на кількість клітинок, що випала на кубику.</p>
+            <h3>Спеціальні правила:</h3>
+            <ul>
+                <li>Якщо гравець потрапляє на клітинку 66, він переміщується на клітинку 6.</li>
+                <li>Якщо гравець потрапляє на клітинку 100, він переміщується на клітинку 120.</li>
+                <li>Якщо гравець потрапляє на клітинку 80, він переміщується на клітинку 1.</li>
+                <li>Якщо гравець потрапляє на клітинку 44, він переміщується на клітинку 55.</li>
+                <li>Якщо гравець потрапляє на клітинку 117, він переміщується на клітинку 107.</li>
+            </ul>
+            <h3>Драбинки та змії:</h3>
+            <ul>
+                <li>Драбинка з клітинки 3 до 22.</li>
+                <li>Змія з клітинки 97 до 78.</li>
+                <li>Драбинка з клітинки 20 до 41.</li>
+                <li>Змія з клітинки 89 до 70.</li>
+            </ul>
+            <p>Переможцем стає той гравець, який першим досягне або перевищить клітинку 120.</p>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+        let currentPlayer = 0;
+        const totalSteps = 120;
+        const specialRules = {
+            66: 6,
+            100: 120,
+            80: 1,
+            44: 55,
+            117: 107
+        };
+        const ladders = {
+            3: 22,
+            20: 41
+        };
+        const snakes = {
+            97: 78,
+            89: 70
+        };
+        const playerColors = ['red', 'blue', 'green', 'yellow'];
+
+        function startGame() {
+            const numPlayers = parseInt(document.getElementById("num-players").value);
+            players = [];
+
+            // Очищення дошки та гравців
+            const board = document.getElementById("board");
+            board.innerHTML = '';
+            document.getElementById("dice-result").innerText = '';
+
+            // Створюємо ігрове поле з 120 клітинок
+            for (let i = 1; i <= totalSteps; i++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.id = `cell-${i}`;
+                cell.innerText = i;
+
+                // Позначаємо спеціальні клітинки для переносу
+                if (specialRules[i]) {
+                    cell.classList.add("special-cell");
+                }
+
+                // Позначаємо драбинки
+                if (ladders[i]) {
+                    cell.classList.add("ladder");
+                }
+
+                // Позначаємо змії
+                if (snakes[i]) {
+                    cell.classList.add("snake");
+                }
+
+                board.appendChild(cell);
+            }
+
+            // Додаємо гравців
+            for (let i = 0; i < numPlayers; i++) {
+                players.push({ position: 0, element: createPlayerElement(i + 1) });
+            }
+
+            displayGameBoard();
+        }
+
+        function createPlayerElement(playerNumber) {
+            const playerElement = document.createElement("div");
+            playerElement.classList.add("player", `player${playerNumber}`);
+            const startCell = document.getElementById('cell-1');
+            startCell.appendChild(playerElement);
+            return playerElement;
+        }
+
+        function displayGameBoard() {
+            const rollButton = document.createElement("button");
+            rollButton.id = "roll-button";
+            rollButton.innerHTML = "Кинути кубик";
+            rollButton.onclick = rollDice;
+            document.getElementById("game-board").appendChild(rollButton);
+
+            updateButtonColor();
+
+            const diceResult = document.createElement("div");
+            diceResult.id = "dice-result";
+            document.getElementById("game-board").appendChild(diceResult);
+        }
+
+        function rollDice() {
+            const dice = Math.floor(Math.random() * 6) + 1;
+            document.getElementById("dice-result").innerText = `Випало: ${dice}`;
+
+            const player = players[currentPlayer];
+            player.position += dice;
+
+            // Якщо позиція більше або дорівнює totalSteps (120)
+            if (player.position >= totalSteps) {
+                player.position = totalSteps;
+                movePlayer(player);
+                alert(`Гравець ${currentPlayer + 1} виграв!`);
+                resetGame();
+                return;
+            }
+
+            // Перевірка спеціальних правил
+            if (specialRules[player.position]) {
+                alert(`Гравець ${currentPlayer + 1} потрапив на спеціальну клітинку ${player.position} і переміщується на ${specialRules[player.position]}!`);
+                player.position = specialRules[player.position];
+            }
+
+            // Перевірка драбинок
+            if (ladders[player.position]) {
+                alert(`Гравець ${currentPlayer + 1} піднявся по драбинці з ${player.position} до ${ladders[player.position]}!`);
+                player.position = ladders[player.position];
+            }
+
+            // Перевірка змій
+            if (snakes[player.position]) {
+                alert(`Гравець ${currentPlayer + 1} потрапив на змію і спустився з ${player.position} до ${snakes[player.position]}!`);
+                player.position = snakes[player.position];
+            }
+
+            movePlayer(player);
+
+            // Переходимо до наступного гравця
+            currentPlayer = (currentPlayer + 1) % players.length;
+            updateButtonColor();
+        }
+
+        function movePlayer(player) {
+            const cellNumber = Math.min(player.position, totalSteps);
+            const targetCell = document.getElementById(`cell-${cellNumber}`);
+            targetCell.appendChild(player.element);
+        }
+
+        function updateButtonColor() {
+            const rollButton = document.getElementById("roll-button");
+            rollButton.style.backgroundColor = playerColors[currentPlayer];
+        }
+
+        function resetGame() {
+            players = [];
+            currentPlayer = 0;
+            document.getElementById("board").innerHTML = '';
+        }
+    </script>
+</body>
+</html>

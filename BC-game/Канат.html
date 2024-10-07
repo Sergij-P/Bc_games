@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перетягування каната</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>Перетягування каната</h1>
+        <div id="rules">
+            <h2>Правила гри:</h2>
+            <p>Вирішуйте математичні задачі. Перетягуйте канат на свою сторону за допомогою правильних відповідей!</p>
+            <button id="start-game">Почати гру</button>
+        </div>
+        <div id="game" class="hidden">
+            <div id="scoreboard">
+                <span id="player1-score">Гравець 1: 0</span>
+                <span id="player2-score">Гравець 2: 0</span>
+            </div>
+            <div id="rope-container">
+                <div id="rope"></div>
+            </div>
+            <div id="expression"></div>
+            <div id="answers"></div>
+            <div id="turn-indicator"></div>
+        </div>
+        <div id="win-message" class="hidden">
+            <h2 id="winner">Переможець:</h2>
+            <button id="restart-game">Грати знову</button>
+        </div>
+    </div>
+    <script>
+        const startButton = document.getElementById('start-game');
+const restartButton = document.getElementById('restart-game');
+const gameContainer = document.getElementById('game');
+const rulesContainer = document.getElementById('rules');
+const winMessageContainer = document.getElementById('win-message');
+const expressionElement = document.getElementById('expression');
+const answersElement = document.getElementById('answers');
+const turnIndicator = document.getElementById('turn-indicator');
+const ropeElement = document.getElementById('rope');
+const player1ScoreElement = document.getElementById('player1-score');
+const player2ScoreElement = document.getElementById('player2-score');
+const winnerElement = document.getElementById('winner');
+
+let player1Score = 0;
+let player2Score = 0;
+let currentPlayer = 1;
+let currentExpression;
+let correctAnswer;
+let timer;
+let timeLeft = 5;
+let isTurnActive = false;
+
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', restartGame);
+window.addEventListener('keydown', acceptTurn);
+
+function startGame() {
+    rulesContainer.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    prepareTurn();
+}
+
+function restartGame() {
+    player1Score = 0;
+    player2Score = 0;
+    updateScore();
+    ropeElement.style.left = '50%';
+    winMessageContainer.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    prepareTurn();
+}
+
+function generateExpression() {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    const operator = Math.random() > 0.5 ? '+' : '*';
+    currentExpression = `${num1} ${operator} ${num2}`;
+    correctAnswer = eval(currentExpression);
+    return currentExpression;
+}
+
+function displayExpression() {
+    expressionElement.textContent = generateExpression();
+    const correctAnswerIndex = Math.floor(Math.random() * 3);
+    answersElement.innerHTML = '';
+    
+    for (let i = 0; i < 3; i++) {
+        const button = document.createElement('button');
+        if (i === correctAnswerIndex) {
+            button.textContent = correctAnswer;
+        } else {
+            let randomAnswer;
+            do {
+                randomAnswer = Math.floor(Math.random() * 100);
+            } while (randomAnswer === correctAnswer);
+            button.textContent = randomAnswer;
+        }
+        button.addEventListener('click', () => handleAnswer(button.textContent));
+        answersElement.appendChild(button);
+    }
+
+    resetTimer();
+}
+
+function handleAnswer(answer) {
+    if (parseInt(answer) === correctAnswer) {
+        if (currentPlayer === 1) {
+            player1Score++;
+        } else {
+            player2Score++;
+        }
+        updateScore();
+        updateRopePosition();
+        if (player1Score === 10 || player2Score === 10) {
+            endGame();
+        } else {
+            displayExpression(); // Після правильної відповіді з'являється новий вираз
+        }
+    } else {
+        passTurn(); // Неправильна відповідь — передача ходу
+    }
+}
+
+function updateScore() {
+    player1ScoreElement.textContent = `Гравець 1: ${player1Score}`;
+    player2ScoreElement.textContent = `Гравець 2: ${player2Score}`;
+}
+
+function updateRopePosition() {
+    const totalScore = player1Score + player2Score;
+    const player1Ratio = player1Score / totalScore;
+    ropeElement.style.left = `${50 + (player1Ratio - 0.5) * 100}%`;
+}
+
+function prepareTurn() {
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
+    turnIndicator.textContent = `Хід гравця ${currentPlayer}. Натисніть пробіл для початку.`;
+    isTurnActive = false;
+}
+
+function startTurn() {
+    turnIndicator.textContent = `Хід гравця ${currentPlayer}`;
+    displayExpression();
+    isTurnActive = true;
+}
+
+function resetTimer() {
+    clearInterval(timer);
+    timeLeft = 5;
+    timer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            passTurn();
+        }
+    }, 1000);
+}
+
+function passTurn() {
+    clearInterval(timer);
+    isTurnActive = false;
+    prepareTurn();
+}
+
+function acceptTurn(event) {
+    if (event.code === 'Space' && !isTurnActive) {
+        startTurn();
+    }
+}
+
+function endGame() {
+    clearInterval(timer);
+    gameContainer.classList.add('hidden');
+    winMessageContainer.classList.remove('hidden');
+    winnerElement.textContent = `Переміг гравець ${player1Score === 10 ? 1 : 2}`;
+}
+    </script>
+</body>
+</html>
